@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 import uuid
 
 import requests
+from requests import Response
+import time
 
 from internal.exceptions import ResourceNotFoundException, UnknownAPIException
 
@@ -32,8 +34,8 @@ class TeamsClient:
         'x-ms-client-caller': 'powerbarSearchFederatedUser'
         }
 
-        response = requests.request("GET", url, headers=headers, data=payload)
-
+        response = self.send_request("GET", url, headers, payload)
+        
         if response.status_code != 200:
             raise UnknownAPIException(f"error {response.status_code} fetching user from api: " + response.text)
         
@@ -60,7 +62,7 @@ class TeamsClient:
         'Referer': 'https://teams.microsoft.com/v2/worker/precompiled-web-worker-b686ae686e2a6f80.js'
         }
 
-        response = requests.request("GET", url, headers=headers, data=payload)
+        response = self.send_request("GET", url, headers, payload)
 
         if response.status_code == 404:
             raise ResourceNotFoundException(f"Chat with given id {chat_id} not found")
@@ -104,7 +106,7 @@ class TeamsClient:
         'Referer': 'https://teams.microsoft.com/v2/worker/precompiled-web-worker-b686ae686e2a6f80.js'
         }
 
-        response = requests.request("POST", url, headers=headers, data=payload)
+        response = self.send_request("POST", url, headers, payload)
 
         if response.status_code != 201:
             raise UnknownAPIException(f"error {response.status_code} creating chat: {response.text}")
@@ -162,7 +164,16 @@ class TeamsClient:
         'Referer': 'https://teams.microsoft.com/v2/worker/precompiled-web-worker-b686ae686e2a6f80.js'
         }
 
-        response = requests.request("POST", url, headers=headers, data=payload)
+        response = self.send_request("POST", url, headers, payload)
 
         if response.status_code != 201:
             raise UnknownAPIException(f"error {response.status_code} sending message: {response.text}")
+        
+
+    def send_request(self, method: str, url: str, headers: Dict, payload: Dict) -> Response:
+        try:
+            return requests.request(method, url, headers=headers, data=payload)
+        except requests.exceptions.ConnectionError:
+            print("Connection error. Retrying request in 5 seconds...")
+            time.sleep(5)
+            return self.send_request(method, url, headers, payload)
