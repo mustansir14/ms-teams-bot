@@ -173,7 +173,7 @@ class TeamsClient:
     def send_request(self, method: str, url: str, headers: Dict, payload: Dict) -> Response:
         try:
             return requests.request(method, url, headers=headers, data=payload)
-        except requests.exceptions.ConnectionError:
+        except (requests.exceptions.ConnectionError, requests.exceptions.ChunkedEncodingError):
             print("Connection error. Retrying request in 5 seconds...")
             time.sleep(5)
             return self.send_request(method, url, headers, payload)
