@@ -81,7 +81,7 @@ if __name__ == "__main__":
         except ResourceNotFoundException:
             new_df.loc[index, "status"] = "Not Found"
             print(Fore.YELLOW + f"Email {row['email']} not found")
-        except UnknownAPIException as e:
+        except Exception as e:
             new_df.loc[index, "status"] = "Error"
             new_df.loc[index, "reason"] = str(e)
             print(Fore.RED + f"Error sending message to {row['email']} Error: {str(e)}")
